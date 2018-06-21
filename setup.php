@@ -1,5 +1,6 @@
 <?php
-include "config.inc.php";
+$dbname = "db/Notes.db";
+$tablename = "NotesTable";
 
   try
   {
@@ -7,7 +8,7 @@ include "config.inc.php";
     $db = new PDO("sqlite:$dbname");
 
     //create the database
-    $db->exec("CREATE TABLE BookmarksTable (Title TEXT, Link TEXT)");
+    $db->exec("CREATE TABLE $tablename (Title TEXT, Notes TEXT)");
 	echo "Database and Table created sucessfully.";
 	
     // close the database connection

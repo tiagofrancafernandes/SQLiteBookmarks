@@ -1,44 +1,32 @@
 <?php
 include "config.inc.php";
+if($_SESSION['logedin'] != 'loggedin')
+{
+header("Location: index.php"); 
+exit(); 
+}
 
 $title = $_POST['title'];
-$link = $_POST['link'];
+$notes = $_POST['notes'];
 
 if(empty($title))
 {
 header("Location: error.php?error=notitle");
 exit();
 }
-if(!ereg("[h][t][t][p][:][/][/][a-zA-Z0-9\]",$link))
+if(empty($notes))
 {
-header("Location: error.php?error=nolink");
+header("Location: error.php?error=nonotes");
 exit();
 }
   
-$referer = $_SERVER['HTTP_REFERER'];
+//open the database
+$db = new PDO("sqlite:$dbname");
 
-//Check if browser sends referrer url or not
-if ($referer == "") //If not, set referrer as your domain
-    $domain = $yoursite;
-else
-    $domain = parse_url($referer); //If yes, parse referrer
-
-if($domain['host'] == $yoursite || $domain['host'] == $yoursite2)
-{
-    //open the database
-    $db = new PDO("sqlite:$dbname");
-
-	$db->exec("INSERT INTO BookmarksTable (Title, Link) VALUES ('$title' ,'$link')");
-	
-    // close the database connection
-    $db = NULL;
-
+$query = "INSERT INTO $tablename (Title, Notes) VALUES (:title ,:notes)";
+$result = $db->prepare($query);
+$result->execute(array("$title", "$notes"));
+// close the database connection
+$db = NULL;
 header("Location: $mainpage"); 
-}
-else
-{
-    //The referrer is not your site, we redirect to your home page
-    header("Location: $yoursite2");
-    exit(); //Stop running the script
-}
 ?>

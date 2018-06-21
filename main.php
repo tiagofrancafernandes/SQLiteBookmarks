@@ -1,37 +1,17 @@
 <?php
 include "config.inc.php";
+if($_SESSION['logedin'] != 'loggedin')
+{
+header("Location: index.php"); 
+exit(); 
+}
 ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
-<title>Bookmarks Manager</title>
+<title>Notes Manager</title>
 <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
 <style type="text/css">
-#customers
-{
-font-family:"Trebuchet MS", Arial, Helvetica, sans-serif;
-width:100%;
-border-collapse:collapse;
-}
-#customers td, #customers th 
-{
-font-size:1em;
-border:1px solid #98bf21;
-padding:3px 7px 2px 7px;
-}
-#customers th 
-{
-font-size:1.1em;
-text-align:left;
-padding-top:5px;
-padding-bottom:4px;
-background-color:#A7C942;
-color:#ffffff;
-}
-#customers tr.alt td 
-{
-color:#000000;
-background-color:#EAF2D3;
-}
 .pages a {
   color: #1C5C9A;
   text-decoration: none;
@@ -85,39 +65,44 @@ background-color:#EAF2D3;
 	font-family:arial, helvetica, arial, sans-serif;
 }
 </style>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" />
 </head>
 <body>
-<h1>Bookmarks Manager</h1>
-<h4><a href="form.php">Add Bookmarks</a> / <a href="logoff.php">Log out</a></h4>
-<table id="customers">
-<thead><tr>
-<th align='left'>Title</th>
-<th align='left'>Link</th>
-<th align='left' width='20'><img src='remove.png' border='0'></th>
-</tr></thead>
+<div id="layoutBox">
+  <!-- Navigation menu starts -->
+  <div id="navigationmenu"><div id="alignleft">Notes Manager</div><div id="alignright"><a href="main.php">Home</a> - <a href="form.php">Add a note</a> - <a href="logoff.php">Logout</a></div><div style="clear: both;"></div></div>
+  
+  
 <?php
 $db = new PDO("sqlite:$dbname");
-$result = $db->query("SELECT * FROM BookmarksTable");
+$result = $db->query("SELECT rowid FROM $tablename");
 $rows = $result->fetchAll();
 $total_pages = count($rows);
-$limit = 25;
+$limit = 5;
 $adjacents = 3;
+if(isset($_GET['page']))
+{
 $page = $_GET['page'];
-if($page) 
+if(preg_match('/[^0-9]/i', $page))
+{
+echo "SQL Injection detected!";
+exit();
+}
+}
+if(isset($page))
 $start = ($page - 1) * $limit; 			//first item to display on this page
 else
 $start = 0;
 
-$result = $db->query("SELECT rowid, Title, Link FROM BookmarksTable LIMIT '$start', '$limit'");
+$result = $db->query("SELECT rowid, Title, Notes FROM $tablename LIMIT '$start', '$limit'");
 
 $i = 1;
 foreach($result as $row)
 {
-	if ($i % 2 != 0) # An odd row 
-    $rowColor = "";
-	else # An even row 
-    $rowColor = "class='alt'";
-	echo "<tr $rowColor>" . "<td>" . stripslashes($row['Title']) . "</td>" . "<td><a href='" . $row['Link'] . "' style='text-decoration: none; color:#000000;' target=\"_blank\">" . $row['Link'] . "</a></td><td width='20'><a href='delete.php?id=" . $row['rowid'] . "'><img src='remove.png' border='0'></a></td>" . "</tr>\n";
+	echo "<div id=\"mainContent\">";
+	echo "<span class=\"underline\">" . stripslashes($row['Title']) . "</span><br><br>" . nl2br($row['Notes']) . "\n";
+	echo "<br><br><hr><div id=\"alignleft\"></div><div id=\"alignright\"><a href='delete.php?id=" . $row['rowid'] . "' onclick=\"javascript:return confirm('Delete permanently?')\"><img src='remove.png' border='0' title='Delete'></a> <a href='edit.php?id=" . $row['rowid'] . "'><img src='edit.png' border='0' title='Edit'></a></div><div style=\"clear: both;\"></div>";
+	echo "</div>";
 	$i++;
 }
 $db = NULL;
@@ -304,10 +289,10 @@ function pagination($total_pages,$limit,$page,$file,$adjacents){
 			}
 		return utf8_decode(ob_get_clean());
 	}
-?>
-</table>
 
-<?php
+if(!isset($page))
+$page=1;
 echo pagination($total_pages,$limit,$page,"main.php?page=",$adjacents);
 ?>
+</div>
 </body>
